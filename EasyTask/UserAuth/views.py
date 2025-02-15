@@ -1,5 +1,10 @@
+from functools import wraps
+
+import jwt
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from dj_rest_auth.registration.views import SocialLoginView
+from django.contrib.auth import get_user_model
+from django.http import JsonResponse
 # noinspection PyUnresolvedReferences
 from drf_yasg import openapi
 # noinspection PyUnresolvedReferences
@@ -106,6 +111,46 @@ def __get_tokens_for_user(user):
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     }
+
+
+def jwt_required(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        User = get_user_model()
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return JsonResponse({'error': 'Authorization header missing'}, status=401)
+
+        try:
+            # Expecting header format: "Bearer <token>"
+            prefix, token = auth_header.split(' ')
+            if prefix.lower() != 'bearer':
+                return JsonResponse({'error': 'Invalid token prefix'}, status=401)
+
+            # Decode the token using your Django SECRET_KEY and expected algorithm(s)
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            if not user_id:
+                return JsonResponse({'error': 'Invalid token payload'}, status=401)
+
+            # Fetch the user from the database
+            try:
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                return JsonResponse({'error': 'User not found'}, status=404)
+
+            # Attach the user to the request object
+            request.user = user
+        except jwt.ExpiredSignatureError:
+            return JsonResponse({'error': 'Token expired'}, status=401)
+        except jwt.InvalidTokenError:
+            return JsonResponse({'error': 'Invalid token'}, status=401)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=401)
+
+        return view_func(request, *args, **kwargs)
+
+    return _wrapped_view
 
 
 class GoogleLogin(SocialLoginView):

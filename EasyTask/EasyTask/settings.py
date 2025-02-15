@@ -61,7 +61,7 @@ SITE_ID = 1
 
 REST_AUTH = {
     'USE_JWT': True,
-    'JWT_AUTH_COOKIE': 'JWT',
+    'JWT_AUTH_COOKIE': 'Bearer',
     'JWT_AUTH_REFRESH_COOKIE': 'REFRESH',
 }
 
@@ -124,6 +124,10 @@ DATABASES = {
         'HOST': os.getenv('DB_HOST'),
 
         'PORT': os.getenv('DB_PORT'),
+
+        'OPTIONS': {
+            'options': '-c search_path=public'
+        },
 
     }
 
@@ -196,7 +200,7 @@ SIMPLE_JWT = {
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
     'VERIFYING_KEY': None,
-    'AUTH_HEADER_TYPES': ('JWT',),
+    'AUTH_HEADER_TYPES': ('Bearer',),
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
@@ -214,8 +218,11 @@ SOCIALACCOUNT_PROVIDERS = {
             "secret": GOOGLE_CLIENT_SECRET,
             "key": "",
         },
-        "SCOPE": ["profile", "email"],
-        "AUTH_PARAMS": {"access_type": "online"},
+        "SCOPE": ["profile", "email",'openid'],
+        "AUTH_PARAMS": {
+            "access_type": "offline",
+            "prompt": "consent"  # Add this line to force consent screen
+        },
     }
 }
 

@@ -39,3 +39,9 @@ class Task(models.Model):
 
     def __str__(self):
         return f"{self.name} (User: {self.user.username})"
+
+
+'''
+todo: Add reward model
+Enum for public or private tasks
+'''
