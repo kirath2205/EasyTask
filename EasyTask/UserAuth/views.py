@@ -1,16 +1,20 @@
-from rest_framework import status
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes
-# noinspection PyUnresolvedReferences
-from rest_framework_simplejwt.tokens import RefreshToken
-# noinspection PyUnresolvedReferences
-from drf_yasg.utils import swagger_auto_schema
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from dj_rest_auth.registration.views import SocialLoginView
 # noinspection PyUnresolvedReferences
 from drf_yasg import openapi
+# noinspection PyUnresolvedReferences
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+# noinspection PyUnresolvedReferences
+from rest_framework_simplejwt.tokens import RefreshToken
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 
 from .models import Auth
 from .serializers import AuthModelSerializer
+from django.conf import settings
 
 
 @swagger_auto_schema(
@@ -104,11 +108,7 @@ def __get_tokens_for_user(user):
     }
 
 
-'''
-TODO: Create a view to sign up a user( create user using 
-That entry would be added to profile model so that we can update that once profile payload is available
-
-Add fields for OTP and email verification
-
-Setup twilio api
-'''
+class GoogleLogin(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+    callback_url = settings.GOOGLE_CALLBACK_URL
+    client_class = OAuth2Client

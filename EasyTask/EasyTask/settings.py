@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'UserAuth',
+    'TaskService',
     'phonenumber_field',
     'drf_yasg',
     "allauth",
@@ -57,6 +58,14 @@ INSTALLED_APPS = [
 ]
 
 SITE_ID = 1
+
+REST_AUTH = {
+    'USE_JWT': True,
+    'JWT_AUTH_COOKIE': 'JWT',
+    'JWT_AUTH_REFRESH_COOKIE': 'REFRESH',
+}
+
+GOOGLE_CALLBACK_URL = os.getenv('GOOGLE_CALLBACK_URL')
 
 AUTHENTICATION_BACKENDS = [
     # Needed to login by username in Django admin, regardless of `allauth`
@@ -151,8 +160,6 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
-
-STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

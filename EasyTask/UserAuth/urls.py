@@ -8,6 +8,8 @@ from rest_framework import permissions
 from drf_yasg import openapi
 from rest_framework_simplejwt import views as jwt_views
 
+from .views import GoogleLogin
+
 schema_view = get_schema_view(
     openapi.Info(
         title="UserAuth service",
@@ -23,7 +25,11 @@ urlpatterns = [
     path('token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
     path('getUsersWithPermission', views.get_all_users_with_jwt, name='GetAllusersWithPermissions'),
     path('createUser', views.create_user, name='CreateUser'),
-    path('userLogin', views.user_login, name='UserLogin')
+    path('userLogin', views.user_login, name='UserLogin'),
+    path('dj-rest-auth/google/', GoogleLogin.as_view(), name='google_login'),
+    path('dj-rest-auth/', include('dj_rest_auth.urls')),
+    path('dj-rest-auth/registration/', include('dj_rest_auth.registration.urls')),
+    path('accounts/', include('allauth.urls')),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
