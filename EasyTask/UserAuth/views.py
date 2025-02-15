@@ -13,7 +13,6 @@ from .models import Auth
 from .serializers import AuthModelSerializer
 
 
-
 @swagger_auto_schema(
     method='get',
     responses={200: 'OK'},
@@ -72,6 +71,7 @@ def create_user(request):
     else:
         return Response(user_payload.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 @swagger_auto_schema(
     method='post',
     responses={200: 'OK', 400: 'BAD REQUEST'},
@@ -90,7 +90,7 @@ def create_user(request):
 @permission_classes([AllowAny])
 def user_login(request):
     user = AuthModelSerializer().get_user_by_email(email=request.data.get('email', ''))
-    if user.check_password(request.data.get('password', '')):
+    if user and user.check_password(request.data.get('password', '')):
         return Response(__get_tokens_for_user(user), status=status.HTTP_200_OK)
     else:
         return Response({'message': 'Invalid Credentials'})
@@ -102,7 +102,6 @@ def __get_tokens_for_user(user):
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     }
-
 
 
 '''

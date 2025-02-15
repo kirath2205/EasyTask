@@ -1,13 +1,14 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
 
-class Auth(AbstractUser):
-    mobile_number = PhoneNumberField(null=False, blank=False, unique=True)
-    email = models.EmailField(unique=True)
 
+class Auth(AbstractUser):
+    username = models.CharField(max_length=100)
+    mobile_number = PhoneNumberField()
+    email = models.EmailField(unique=True)
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
 #
 # @receiver(post_save, sender=Auth)
 # def create_profile_entry(sender, instance, created, **kwargs):
