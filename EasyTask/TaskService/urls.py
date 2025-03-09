@@ -18,7 +18,8 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    path("createTask", views.create_task, name="CreateTask")
+    path("createTask", views.create_task, name="CreateTask"),
+    path("getCurrentTasks", views.get_current_tasks, name="GetCurrentTasks")
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
