@@ -14,6 +14,20 @@ from pathlib import Path
 from datetime import timedelta
 import os
 from dotenv import load_dotenv
+import redis
+from celery import Celery
+
+# Trigger the task
+
+# Create the Celery app instance
+app = Celery('redis_listener', broker='redis://localhost:6379/0')
+
+# Optionally, configure Celery settings
+app.conf.update(
+    result_backend='redis://localhost:6379/0',
+)
+app.autodiscover_tasks()
+
 
 load_dotenv()
 
@@ -45,6 +59,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'UserAuth',
     'TaskService',
+    'EasyTaskService',
     'phonenumber_field',
     'drf_yasg',
     "allauth",
@@ -132,6 +147,13 @@ DATABASES = {
     }
 
 }
+
+redis_client = redis.Redis(
+    host='localhost',
+    port=6379,
+    db=0,
+    decode_responses=True  # makes returned strings unicode instead of bytes
+)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

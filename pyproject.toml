@@ -22,6 +22,9 @@ social-auth-app-django = "^5.4.3"
 psycopg2-binary = "^2.9.10"
 drf-spectacular = "^0.28.0"
 python-dotenv = "^1.0.1"
+redis = "^5.2.1"
+python-dateutil = "^2.9.0.post0"
+celery = "^5.5.0"
 
 
 [build-system]

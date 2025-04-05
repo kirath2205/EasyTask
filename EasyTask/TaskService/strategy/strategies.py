@@ -10,7 +10,6 @@ class TaskStrategy(ABC):
 
 class TaskFilterStrategy(TaskStrategy):
     def apply(self, queryset, params):
-        # Apply filtering based on query parameters.
         status = params.get('status')
         if status:
             queryset = queryset.filter(status=status)
@@ -28,7 +27,6 @@ class TaskFilterStrategy(TaskStrategy):
 
 class TaskSortingStrategy(TaskStrategy):
     def apply(self, queryset, params):
-        # Apply ordering if the ordering parameter is provided.
         ordering = params.get('sort')
         if ordering:
             queryset = queryset.order_by(ordering)

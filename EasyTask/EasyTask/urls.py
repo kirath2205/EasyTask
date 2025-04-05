@@ -21,7 +21,8 @@ urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('userauth/', include('UserAuth.urls')),
-    path('taskService/', include('TaskService.urls'))
+    path('taskService/', include('TaskService.urls')),
+    path('easyTaskService/', include('EasyTaskService.urls'))
 ]
 
 

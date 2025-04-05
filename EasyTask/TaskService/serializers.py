@@ -4,13 +4,19 @@ from .models import Task
 
 
 class TaskSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Task
         fields = '__all__'
         extra_kwargs = {
             'user': {'read_only': True},
         }
+
+    def validate(self, attrs):
+        required_fields = ['title', 'description', 'frequency', 'starts_on', 'ends_on']
+        for required_field in required_fields:
+            if required_field not in self.initial_data:
+                raise serializers.ValidationError({required_field: "This field is required."})
+        return attrs
 
     def validate_due_date(self, due_date):
         if due_date < timezone.now():
