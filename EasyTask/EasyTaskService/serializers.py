@@ -5,7 +5,6 @@ from django.db import transaction
 from rest_framework import serializers
 from .models import *
 from EasyTask.settings import redis_client
-from Celery.tasks import listen_for_expirations
 
 
 class PrivateTaskSerializer(serializers.ModelSerializer):
@@ -64,8 +63,6 @@ class PrivateTaskSerializer(serializers.ModelSerializer):
                                                        ends_on=validated_data.get('ends_on'),
                                                        frequency=validated_data.get('frequency'))
             due_date_epoch_time = int(due_date.timestamp())
-            listen_for_expirations.apply_async()
-            # redis_client.zadd("subscriptions_due_date", {subscription.subscription_id: due_date_epoch_time})
             redis_client.set(str(subscription.subscription_id), '', exat=due_date_epoch_time)
 
             return subscription

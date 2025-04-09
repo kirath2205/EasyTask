@@ -17,16 +17,6 @@ from dotenv import load_dotenv
 import redis
 from celery import Celery
 
-# Trigger the task
-
-# Create the Celery app instance
-app = Celery('redis_listener', broker='redis://localhost:6379/0')
-
-# Optionally, configure Celery settings
-app.conf.update(
-    result_backend='redis://localhost:6379/0',
-)
-app.autodiscover_tasks()
 
 
 load_dotenv()
@@ -69,7 +59,8 @@ INSTALLED_APPS = [
     "dj_rest_auth",
     "dj_rest_auth.registration",
     "rest_framework",
-    'rest_framework.authtoken'
+    'rest_framework.authtoken',
+    'TaskProcessor'
 ]
 
 SITE_ID = 1

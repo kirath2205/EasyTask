@@ -12,7 +12,7 @@ FREQUENCY_CHOICES = [
     ('HOURLY', datetime.timedelta(hours=1)),
     ('DAILY', datetime.timedelta(days=1)),
     ('WEEKLY', datetime.timedelta(weeks=1)),
-    ('MONTHLY', relativedelta(months=1)),
+    # ('MONTHLY', relativedelta(months=1)),
 ]
 
 FREQUENCY_TO_DELTA = {

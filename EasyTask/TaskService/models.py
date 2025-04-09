@@ -43,5 +43,5 @@ class Task(models.Model):
 
 '''
 todo: Add reward model
-Enum for public or private Celery
+Enum for public or private TaskProcessor
 '''

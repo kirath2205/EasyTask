@@ -29,12 +29,12 @@ def create_task(request):
 
 @swagger_auto_schema(
     method='get',
-    operation_description="Retrieve a paginated list of Celery for the authenticated user, with optional filtering and "
+    operation_description="Retrieve a paginated list of TaskProcessor for the authenticated user, with optional filtering and "
                           "sorting.",
     manual_parameters=[
         # openapi.Parameter('page', openapi.IN_QUERY, description="Page number for pagination", type=openapi.TYPE_INTEGER),
-        # openapi.Parameter('filter_by', openapi.IN_QUERY, description="Filter Celery based on criteria (e.g., status, date)", type=openapi.TYPE_STRING),
-        # openapi.Parameter('sort_by', openapi.IN_QUERY, description="Sort Celery by a specific field", type=openapi.TYPE_STRING),
+        # openapi.Parameter('filter_by', openapi.IN_QUERY, description="Filter TaskProcessor based on criteria (e.g., status, date)", type=openapi.TYPE_STRING),
+        # openapi.Parameter('sort_by', openapi.IN_QUERY, description="Sort TaskProcessor by a specific field", type=openapi.TYPE_STRING),
     ],
     responses={
         200: TaskSerializer(many=True),
