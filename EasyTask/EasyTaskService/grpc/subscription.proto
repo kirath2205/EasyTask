@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package subscription;
+
+message SubscriptionRequest {
+  string subscription_id = 1;
+}
+
+message SubscriptionResponse {
+  string status = 1;
+  string message = 2;
+}
+
+service SubscriptionService {
+  rpc UpdateSubscription (SubscriptionRequest) returns (SubscriptionResponse);
+}
