@@ -5,8 +5,10 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 
 from UserAuth.views import jwt_required
-from .serializers import PrivateTaskSerializer
+from .serializers import PrivateTaskSerializer, SubscriptionSerializer
 from EasyTask.settings import redis_client
+from rest_framework.exceptions import ValidationError
+import traceback
 
 
 @api_view(['POST'])
@@ -23,6 +25,26 @@ def create_private_task(request):
         'subscription_id': subscription.subscription_id,
     },
         status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+@jwt_required
+def get_subscriptions(request):
+    user = request.user
+    print(request.query_params)
+    subscription_status = request.query_params.get('status', None)
+    page = int(request.query_params.get('page', 1))
+    page_size = int(request.query_params.get('page_size', 10))
+    try:
+        subscriptions = SubscriptionSerializer.filter_subscriptions(
+            user=user, status=subscription_status, page=page, page_size=page_size, request=request)
+        return subscriptions
+    except ValidationError as e:
+        return Response({"error": str(e)}, status=400)
+    except Exception as e:
+        print(e)
+        print(traceback.print_exc())
+        return Response({"error": "Something went wrong. Please try again later."}, status=500)
 
 
 @api_view(['GET'])

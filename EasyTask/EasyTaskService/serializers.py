@@ -2,6 +2,7 @@ from EasyTask.settings import redis_client
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
+from rest_framework.pagination import PageNumberPagination
 
 from .enums import Snapshot_status_enum, Status_enum, Subscription_enum
 from .models import *
@@ -108,5 +109,20 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             subscription.save()
 
             return subscription
+
+    @staticmethod
+    def filter_subscriptions(user, request, status=None, page=1, page_size=10):
+        subscriptions = Subscription.objects.filter(user=user)
+
+        if status:
+            subscriptions = subscriptions.filter(status=status)
+
+        subscriptions = subscriptions.order_by('starts_on')
+
+        paginator = PageNumberPagination()
+        paginator.page_size = page_size
+        paginator.page = page
+        result_page = paginator.paginate_queryset(subscriptions, request)
+        return paginator.get_paginated_response(SubscriptionSerializer(result_page, many=True).data)
 
 
