@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x12subscription.proto\x12\x0csubscription\".\n\x13SubscriptionRequest\x12\x17\n\x0fsubscription_id\x18\x01 \x01(\t\"7\n\x14SubscriptionResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t2r\n\x13SubscriptionService\x12[\n\x12UpdateSubscription\x12!.subscription.SubscriptionRequest\x1a\".subscription.SubscriptionResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x12subscription.proto\x12\x0csubscription\".\n\x13SubscriptionRequest\x12\x17\n\x0fsubscription_id\x18\x01 \x01(\t\"H\n\x14SubscriptionResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x0f\n\x07success\x18\x02 \x01(\x08\x12\x0e\n\x06streak\x18\x03 \x01(\x05\x32r\n\x13SubscriptionService\x12[\n\x12UpdateSubscription\x12!.subscription.SubscriptionRequest\x1a\".subscription.SubscriptionResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -34,7 +34,7 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_SUBSCRIPTIONREQUEST']._serialized_start=36
   _globals['_SUBSCRIPTIONREQUEST']._serialized_end=82
   _globals['_SUBSCRIPTIONRESPONSE']._serialized_start=84
-  _globals['_SUBSCRIPTIONRESPONSE']._serialized_end=139
-  _globals['_SUBSCRIPTIONSERVICE']._serialized_start=141
-  _globals['_SUBSCRIPTIONSERVICE']._serialized_end=255
+  _globals['_SUBSCRIPTIONRESPONSE']._serialized_end=156
+  _globals['_SUBSCRIPTIONSERVICE']._serialized_start=158
+  _globals['_SUBSCRIPTIONSERVICE']._serialized_end=272
 # @@protoc_insertion_point(module_scope)

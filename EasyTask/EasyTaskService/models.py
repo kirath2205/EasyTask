@@ -113,10 +113,10 @@ class Subscription(models.Model):
 class Snapshot(models.Model):
     snapshot_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     subscription = models.ForeignKey("Subscription", on_delete=models.CASCADE)
-    proof = models.ForeignKey("Proof", on_delete=models.CASCADE)
+    proof = models.ForeignKey("Proof", on_delete=models.CASCADE, null=True, blank=True)
     started_on = models.DateTimeField()
     completed_on = models.DateTimeField()
-    snapshot_status = models.CharField(max_length=20, choices=SNAPSHOT_STATUS, default='FAILED')
+    snapshot_status = models.CharField(max_length=20, default='FAILED')
 
 # class ArchiveSubscription(models.Model):
 #     subscription_id = models.IntegerField(primary_key=True, editable=False)

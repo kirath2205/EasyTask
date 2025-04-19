@@ -1,11 +1,8 @@
-# grpc_server.py
-
 import grpc
 from concurrent import futures
 import os
 import django
 
-# Set up Django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "EasyTask.settings")
 django.setup()
 

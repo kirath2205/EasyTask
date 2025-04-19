@@ -1,10 +1,10 @@
-import datetime
-from django.utils import timezone
-
-from django.db import transaction
-from rest_framework import serializers
-from .models import *
 from EasyTask.settings import redis_client
+from django.db import transaction
+from django.utils import timezone
+from rest_framework import serializers
+
+from .enums import Snapshot_status_enum, Status_enum, Subscription_enum
+from .models import *
 
 
 class PrivateTaskSerializer(serializers.ModelSerializer):
@@ -63,6 +63,50 @@ class PrivateTaskSerializer(serializers.ModelSerializer):
                                                        ends_on=validated_data.get('ends_on'),
                                                        frequency=validated_data.get('frequency'))
             due_date_epoch_time = int(due_date.timestamp())
-            redis_client.set(str(subscription.subscription_id), '', exat=due_date_epoch_time)
+            redis_client.set(str(f"{subscription.subscription_id}::{Status_enum.IN_PROGRESS.value}"), '',
+                             exat=due_date_epoch_time)
 
             return subscription
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subscription
+        fields = '__all__'
+
+    @transaction.atomic
+    def update(self, subscription, validated_data):
+        with transaction.atomic():
+            starts_on = subscription.starts_on
+            ends_on = subscription.ends_on
+            frequency_delta = FREQUENCY_TO_DELTA[subscription.frequency]
+            new_starts_on = starts_on + frequency_delta
+            new_due_date = subscription.due_date + frequency_delta
+            subscription_status = validated_data.get('status')
+
+            if subscription_status != 'COMPLETED':
+                snapshot_status = Snapshot_status_enum.FAILED.value
+                validated_data['streak'] = 0
+            else:
+                snapshot_status = Snapshot_status_enum.COMPLETED.value
+                validated_data['streak'] = subscription.streak + 1
+                validated_data['max_streak'] = max(subscription.max_streak, validated_data['streak'])
+            print(snapshot_status)
+            snapshot = Snapshot.objects.create(subscription=subscription, proof=None, started_on=starts_on,
+                                               completed_on=ends_on, snapshot_status=snapshot_status)
+            if new_starts_on >= ends_on:
+                validated_data['status'] = Subscription_enum.COMPLETED
+            else:
+                validated_data['status'] = Subscription_enum.IN_PROGRESS
+                validated_data['starts_on'] = new_starts_on
+                validated_data['due_date'] = new_due_date
+                redis_client.set(str(f"{subscription.subscription_id}::{Status_enum.IN_PROGRESS.value}"), '',
+                                 exat=new_due_date)
+
+            for attr, value in validated_data.items():
+                setattr(subscription, attr, value)
+            subscription.save()
+
+            return subscription
+
+
