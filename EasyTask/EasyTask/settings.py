@@ -14,6 +14,10 @@ from pathlib import Path
 from datetime import timedelta
 import os
 from dotenv import load_dotenv
+import redis
+from celery import Celery
+
+
 
 load_dotenv()
 
@@ -44,6 +48,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'UserAuth',
+    'TaskService',
+    'EasyTaskService',
     'phonenumber_field',
     'drf_yasg',
     "allauth",
@@ -53,10 +59,19 @@ INSTALLED_APPS = [
     "dj_rest_auth",
     "dj_rest_auth.registration",
     "rest_framework",
-    'rest_framework.authtoken'
+    'rest_framework.authtoken',
+    'TaskProcessor'
 ]
 
 SITE_ID = 1
+
+REST_AUTH = {
+    'USE_JWT': True,
+    'JWT_AUTH_COOKIE': 'Bearer',
+    'JWT_AUTH_REFRESH_COOKIE': 'REFRESH',
+}
+
+GOOGLE_CALLBACK_URL = os.getenv('GOOGLE_CALLBACK_URL')
 
 AUTHENTICATION_BACKENDS = [
     # Needed to login by username in Django admin, regardless of `allauth`
@@ -116,9 +131,20 @@ DATABASES = {
 
         'PORT': os.getenv('DB_PORT'),
 
+        'OPTIONS': {
+            'options': '-c search_path=public'
+        },
+
     }
 
 }
+
+redis_client = redis.Redis(
+    host='localhost',
+    port=6379,
+    db=0,
+    decode_responses=True  # makes returned strings unicode instead of bytes
+)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -151,8 +177,6 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
-
-STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -189,7 +213,7 @@ SIMPLE_JWT = {
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
     'VERIFYING_KEY': None,
-    'AUTH_HEADER_TYPES': ('JWT',),
+    'AUTH_HEADER_TYPES': ('Bearer',),
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
@@ -207,8 +231,11 @@ SOCIALACCOUNT_PROVIDERS = {
             "secret": GOOGLE_CLIENT_SECRET,
             "key": "",
         },
-        "SCOPE": ["profile", "email"],
-        "AUTH_PARAMS": {"access_type": "online"},
+        "SCOPE": ["profile", "email",'openid'],
+        "AUTH_PARAMS": {
+            "access_type": "offline",
+            "prompt": "consent"  # Add this line to force consent screen
+        },
     }
 }
 

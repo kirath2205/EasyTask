@@ -1,16 +1,25 @@
-from rest_framework import status
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes
-# noinspection PyUnresolvedReferences
-from rest_framework_simplejwt.tokens import RefreshToken
-# noinspection PyUnresolvedReferences
-from drf_yasg.utils import swagger_auto_schema
+from functools import wraps
+
+import jwt
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from dj_rest_auth.registration.views import SocialLoginView
+from django.contrib.auth import get_user_model
+from django.http import JsonResponse
 # noinspection PyUnresolvedReferences
 from drf_yasg import openapi
+# noinspection PyUnresolvedReferences
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+# noinspection PyUnresolvedReferences
+from rest_framework_simplejwt.tokens import RefreshToken
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 
 from .models import Auth
 from .serializers import AuthModelSerializer
+from django.conf import settings
 
 
 @swagger_auto_schema(
@@ -104,11 +113,47 @@ def __get_tokens_for_user(user):
     }
 
 
-'''
-TODO: Create a view to sign up a user( create user using 
-That entry would be added to profile model so that we can update that once profile payload is available
+def jwt_required(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        User = get_user_model()
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return JsonResponse({'error': 'Authorization header missing'}, status=401)
 
-Add fields for OTP and email verification
+        try:
+            # Expecting header format: "Bearer <token>"
+            prefix, token = auth_header.split(' ')
+            if prefix.lower() != 'bearer':
+                return JsonResponse({'error': 'Invalid token prefix'}, status=401)
 
-Setup twilio api
-'''
+            # Decode the token using your Django SECRET_KEY and expected algorithm(s)
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            if not user_id:
+                return JsonResponse({'error': 'Invalid token payload'}, status=401)
+
+            # Fetch the user from the database
+            try:
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                return JsonResponse({'error': 'User not found'}, status=404)
+
+            # Attach the user to the request object
+            request.user = user
+        except jwt.ExpiredSignatureError:
+            return JsonResponse({'error': 'Token expired'}, status=401)
+        except jwt.InvalidTokenError:
+            return JsonResponse({'error': 'Invalid token'}, status=401)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=401)
+
+        return view_func(request, *args, **kwargs)
+
+    return _wrapped_view
+
+
+class GoogleLogin(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+    callback_url = settings.GOOGLE_CALLBACK_URL
+    client_class = OAuth2Client
