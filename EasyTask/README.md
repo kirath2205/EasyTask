@@ -2,7 +2,8 @@ grpc server -> poetry run python grpc_server.py
 celery worker -> poetry run celery -A EasyTask worker --loglevel=info
 django server -> poetry run python manage.py runserver
 run subscriber.py main function directly
-run redis docker file -> /Users/kirath/PycharmProjects/EasyTask/docker/redis/docker-compose.yaml
+run redis docker file -> /Users/kirath/PycharmProjects/
+EasyTask/docker/redis/docker-compose.yaml
 
 
 command to generate protobuf files - 

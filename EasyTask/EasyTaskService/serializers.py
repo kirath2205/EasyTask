@@ -76,16 +76,17 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     @transaction.atomic
-    def update(self, subscription, validated_data):
+    def update(self, subscription, validated_data, proof=None):
         with transaction.atomic():
+            redis_client.delete(str(f"{subscription.subscription_id}::{Status_enum.IN_PROGRESS.value}"))
             starts_on = subscription.starts_on
             ends_on = subscription.ends_on
             frequency_delta = FREQUENCY_TO_DELTA[subscription.frequency]
             new_starts_on = starts_on + frequency_delta
-            new_due_date = subscription.due_date + frequency_delta
+            new_due_date = new_starts_on + frequency_delta
             subscription_status = validated_data.get('status')
 
-            if subscription_status != 'COMPLETED':
+            if subscription_status != Status_enum.COMPLETED:
                 snapshot_status = Snapshot_status_enum.FAILED.value
                 validated_data['streak'] = 0
             else:
@@ -93,8 +94,8 @@ class SubscriptionSerializer(serializers.ModelSerializer):
                 validated_data['streak'] = subscription.streak + 1
                 validated_data['max_streak'] = max(subscription.max_streak, validated_data['streak'])
             print(snapshot_status)
-            snapshot = Snapshot.objects.create(subscription=subscription, proof=None, started_on=starts_on,
-                                               completed_on=ends_on, snapshot_status=snapshot_status)
+            snapshot = Snapshot.objects.create(subscription=subscription, proof=proof, started_on=starts_on,
+                                               completed_on=new_starts_on, snapshot_status=snapshot_status)
             if new_starts_on >= ends_on:
                 validated_data['status'] = Subscription_enum.COMPLETED
             else:
@@ -124,5 +125,45 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         paginator.page = page
         result_page = paginator.paginate_queryset(subscriptions, request)
         return paginator.get_paginated_response(SubscriptionSerializer(result_page, many=True).data)
+
+
+class ProofSerializer(serializers.ModelSerializer):
+    image_uri = serializers.CharField(write_only=True)
+    subscription_id = serializers.UUIDField(write_only=True)
+    class Meta:
+        model = Proof
+        fields = '__all__'
+
+    def validate(self, attrs):
+        required_fields = ['subscription_id', 'image_uri']
+        for required_field in required_fields:
+            if required_field not in self.initial_data:
+                raise serializers.ValidationError({required_field: "This field is required."})
+        return attrs
+
+    def validate_subscription_id(self, subscription_id):
+        if not Subscription.objects.filter(subscription_id=subscription_id).exists():
+            raise serializers.NotFound('Subscription not found')
+
+        return subscription_id
+
+    def validate_image_uri(self, image_uri):
+        '''
+        validate image resource exists in s3
+        '''
+        print(f"image uri is {image_uri}")
+        return image_uri
+
+    @transaction.atomic
+    def create(self, validated_data):
+        with transaction.atomic():
+            self._validated_subscription_id = validated_data.pop("subscription_id", None)
+            proof = Proof.objects.create(image_uri=validated_data.get("image_uri"))
+
+            return proof
+
+    def get_subscription_id(self):
+        return getattr(self, "_validated_subscription_id", None)
+
 
 

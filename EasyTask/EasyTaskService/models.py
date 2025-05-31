@@ -55,7 +55,7 @@ class Terms(models.Model):
 
 class Proof(models.Model):
     proof_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    image = models.CharField(max_length=200, default='')
+    image_uri = models.CharField(max_length=200, default='')
 
 
 class Requirement(models.Model):
@@ -108,6 +108,9 @@ class Subscription(models.Model):
         choices=STATUS,
         default='UPCOMING'
     )
+
+    def get_task(self):
+        return self.task
 
 
 class Snapshot(models.Model):
