@@ -48,7 +48,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'UserAuth',
-    'TaskService',
     'EasyTaskService',
     'phonenumber_field',
     'drf_yasg',

@@ -1,78 +1,63 @@
 from celery import shared_task
-from EasyTaskService.serializers import SubscriptionSerializer
-from EasyTaskService.models import Proof, Subscription
+from EasyTaskService.business import TaskManager
+from EasyTaskService.services import ProofService, SubscriptionService
 
 import traceback
-
-from EasyTaskService.enums import Status_enum
 
 
 @shared_task
 def handle_expiry_event(message):
-    print(f"Processing a new task {message}")
+    """Handle Redis key expiry events"""
+    print(f"Processing expiry event: {message}")
     expired_data = message['data'].decode('utf-8')
     print(f"Key expired: {expired_data}")
+
     subscription_id, status = expired_data.split("::")
-    print(subscription_workflow(subscription_id=subscription_id, status=status))
+
+    # Use business layer for processing
+    task_manager = TaskManager()
+    result = task_manager.process_proof_validation(
+        proof_id=None,
+        subscription_id=subscription_id,
+        validation_result=False  # Expired = failed
+    )
+
+    return result
 
 
 @shared_task
 def handle_proof_validation(proof_id, subscription_id, task_id):
-    print(f"[Celery] proof is {subscription_id}")
-    print(f"[Celery] subscription_id is {subscription_id}")
-    print(f"[Celery] task id is {task_id}")
-    print(subscription_workflow(subscription_id=subscription_id, proof_id=proof_id))
+    """Handle proof validation"""
+    print(f"[Celery] Processing proof validation:")
+    print(f"  - proof_id: {proof_id}")
+    print(f"  - subscription_id: {subscription_id}")
+    print(f"  - task_id: {task_id}")
 
-
-def validate_image(image_uri, task):
-    '''
-            Make LLM call here, if the proof passes, create a new proof resource and link it to subscription
-
-        '''
-    '''
-    Validate requirement
-    '''
-    print(f"Validating {task}")
-    return True
-
-
-def subscription_workflow(subscription_id, proof_id=None, status=None):
     try:
-        subscription = Subscription.objects.get(subscription_id=subscription_id)
-        proof = None
-        if proof_id:
-            proof = Proof.objects.get(proof_id=proof_id)
-        if proof:
-            image_validated = _validate_image(proof.image_uri, subscription)
-            if not image_validated:
-                return "Verification failed"
-            status = Status_enum.COMPLETED
+        # Get proof and subscription
+        proof_service = ProofService()
+        subscription_service = SubscriptionService()
 
-        subscription = Subscription.objects.get(subscription_id=subscription_id)
-        serializer = SubscriptionSerializer()
-        updated_subscription = serializer.update(subscription, {'status': status}, proof)
-        print(updated_subscription)
-        print(f"Streak type: {type(updated_subscription.streak)}, value: {updated_subscription.streak}")
-        print(
-            f"[gRPC] Returning: message=Subscription {subscription_id} updated, success=True, streak={updated_subscription.streak}")
+        proof = proof_service.get_proof_by_id(proof_id)
+        subscription = subscription_service.get_subscription_by_id(subscription_id)
 
-        return f"Subscription {subscription_id} updated"
+        if not proof or not subscription:
+            return "Proof or subscription not found"
 
-    except Subscription.DoesNotExist:
-        return 'Subscription does not exist'
+        # Validate proof against task requirements
+        validation_result = proof_service.validate_proof_against_task(proof, subscription.task)
+
+        # Use business layer for processing validation result
+        task_manager = TaskManager()
+        result = task_manager.process_proof_validation(
+            proof_id=proof_id,
+            subscription_id=subscription_id,
+            validation_result=validation_result
+        )
+
+        return result
 
     except Exception as e:
-        return str(e.__str__())
-
-
-def _validate_image(image_uri, subscription):
-    '''
-                Make LLM call here, if the proof passes, create a new proof resource and link it to subscription
-
-        '''
-    '''
-    Validate requirement
-    '''
-    task = subscription.get_task()
-    print(f"Validating {task.requirement}")
-    return True
+        print(f"Error in proof validation: {e}")
+        print(traceback.format_exc())
+        return f"Error: {str(e)}"
