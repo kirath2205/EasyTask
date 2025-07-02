@@ -1,28 +1,10 @@
-from celery import shared_task
-from EasyTaskService.business import TaskManager
-from EasyTaskService.services import ProofService, SubscriptionService
-
 import traceback
 
+from celery import shared_task
 
-@shared_task
-def handle_expiry_event(message):
-    """Handle Redis key expiry events"""
-    print(f"Processing expiry event: {message}")
-    expired_data = message['data'].decode('utf-8')
-    print(f"Key expired: {expired_data}")
-
-    subscription_id, status = expired_data.split("::")
-
-    # Use business layer for processing
-    task_manager = TaskManager()
-    result = task_manager.process_proof_validation(
-        proof_id=None,
-        subscription_id=subscription_id,
-        validation_result=False  # Expired = failed
-    )
-
-    return result
+from EasyTaskService.business import TaskManager
+from EasyTaskService.services import ProofService
+from EasyTaskService.services import SubscriptionService
 
 
 @shared_task

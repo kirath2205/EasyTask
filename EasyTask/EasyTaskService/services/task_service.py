@@ -7,7 +7,6 @@ from django.contrib.auth import get_user_model
 from ..models import Task, Subscription, FREQUENCY_TO_DELTA
 from ..enums import Status_enum
 from .subscription_service import SubscriptionService
-from .redis_service import RedisService
 
 User = get_user_model()
 
@@ -15,7 +14,6 @@ User = get_user_model()
 class TaskService:
     def __init__(self):
         self.subscription_service = SubscriptionService()
-        self.redis_service = RedisService()
 
     @transaction.atomic
     def create_private_task(self, user: User, task_data: Dict[str, Any]) -> Subscription:

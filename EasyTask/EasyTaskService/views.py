@@ -1,14 +1,15 @@
-from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
-
-from UserAuth.views import jwt_required
-from .serializers import PrivateTaskSerializer, ProofSerializer, SubscriptionSerializer
-from .business import TaskManager
-from .services import RedisService, SubscriptionService
-from EasyTask.celery import app
 import traceback
+
+from EasyTask.celery import app
+from UserAuth.views import jwt_required
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+from .business import TaskManager
+from .serializers import PrivateTaskSerializer, ProofSerializer, SubscriptionSerializer
+from .services import SubscriptionService
 
 
 @api_view(['POST'])
@@ -105,15 +106,3 @@ def submit_proof(request):
             'message': "Could not submit proof. Please try again"
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def test_redis(request):
-    """
-    Test Redis connection using service layer
-    """
-    redis_service = RedisService()
-    if redis_service.test_connection():
-        return Response({'message': "✅ Redis is running"})
-    else:
-        return Response({'message': "❌ Redis connection error"})

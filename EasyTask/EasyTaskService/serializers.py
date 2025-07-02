@@ -1,7 +1,7 @@
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import Task, Subscription, Proof
+from .models import Task, Subscription, Proof, Milestone
 from .services import ValidationService
 
 
@@ -68,3 +68,8 @@ class ProofSerializer(serializers.ModelSerializer):
         if not image_uri.strip():
             raise serializers.ValidationError("Image URI cannot be empty")
         return image_uri
+
+
+class MilestoneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Milestone

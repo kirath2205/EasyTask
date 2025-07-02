@@ -10,9 +10,9 @@ class ProofService:
         self.validation_service = ValidationService()
 
     @transaction.atomic
-    def create_proof(self, image_uri: str) -> Proof:
-        """Create a new proof"""
-        return Proof.objects.create(image_uri=image_uri)
+    def create_proof(self, image_uri: str, milestone=None) -> Proof:
+        """Create a new proof and optionally link it to a milestone"""
+        return Proof.objects.create(image_uri=image_uri, milestone=milestone)
 
     def get_proof_by_id(self, proof_id: str) -> Optional[Proof]:
         """Get proof by ID"""

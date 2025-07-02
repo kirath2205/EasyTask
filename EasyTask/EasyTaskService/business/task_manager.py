@@ -1,7 +1,7 @@
 from typing import Dict, Any, Optional
 from django.contrib.auth import get_user_model
 
-from ..services import TaskService, SubscriptionService, ProofService
+from ..services import TaskService, SubscriptionService, ProofService, MilestoneService
 from ..models import Subscription
 
 User = get_user_model()
@@ -17,6 +17,7 @@ class TaskManager:
         self.task_service = TaskService()
         self.subscription_service = SubscriptionService()
         self.proof_service = ProofService()
+        self.milestone_service = MilestoneService()
 
     def create_user_task(self, user: User, task_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -49,8 +50,21 @@ class TaskManager:
                     'error': 'Subscription not found'
                 }
 
-            # Create proof
-            proof = self.proof_service.create_proof(image_uri)
+            milestone = self.milestone_service.get_active_milestone(subscription)
+            if milestone is None:
+                return {
+                    'success': False,
+                    'error': 'No active milestone',
+                }
+
+            elif milestone.is_completed:
+                return {
+                    'success': False,
+                    'error': 'Latest milestone has already been completed',
+                }
+
+            # Create proof linked to milestone
+            proof = self.proof_service.create_proof(image_uri, milestone=milestone)
 
             # Return data for async processing
             return {

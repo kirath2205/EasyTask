@@ -56,6 +56,13 @@ class Terms(models.Model):
 class Proof(models.Model):
     proof_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     image_uri = models.CharField(max_length=200, default='')
+    milestone = models.ForeignKey(
+        "Milestone",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="proofs",
+    )
 
 
 class Requirement(models.Model):
@@ -120,6 +127,16 @@ class Snapshot(models.Model):
     started_on = models.DateTimeField()
     completed_on = models.DateTimeField()
     snapshot_status = models.CharField(max_length=20, default='FAILED')
+
+
+class Milestone(models.Model):
+    milestone_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    subscription = models.ForeignKey("Subscription", on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    started_on = models.DateTimeField()
+    completed_on = models.DateTimeField(null=True)
+    ends_on = models.DateTimeField()
+    is_completed = models.BooleanField(default=False)
 
 # class ArchiveSubscription(models.Model):
 #     subscription_id = models.IntegerField(primary_key=True, editable=False)

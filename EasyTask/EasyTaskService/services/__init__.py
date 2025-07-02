@@ -1,13 +1,13 @@
 from .task_service import TaskService
 from .subscription_service import SubscriptionService
 from .proof_service import ProofService
-from .redis_service import RedisService
 from .validation_service import ValidationService
+from .milestone_service import MilestoneService
 
 __all__ = [
     'TaskService',
     'SubscriptionService',
     'ProofService',
-    'RedisService',
-    'ValidationService'
+    'ValidationService',
+    'MilestoneService'
 ]

@@ -3,17 +3,17 @@ from django.db import transaction
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from rest_framework.pagination import PageNumberPagination
+from .milestone_service import MilestoneService
 
 from ..models import Subscription, Task, Snapshot, Proof, FREQUENCY_TO_DELTA
 from ..enums import Status_enum, Snapshot_status_enum, Subscription_enum
-from .redis_service import RedisService
 
 User = get_user_model()
 
 
 class SubscriptionService:
     def __init__(self):
-        self.redis_service = RedisService()
+        self.milestone_service = MilestoneService()
 
     def create_subscription(self, task: Task, user: User, starts_on, ends_on, frequency: str) -> Subscription:
         """Create a new subscription"""
@@ -28,9 +28,6 @@ class SubscriptionService:
             ends_on=ends_on,
             frequency=frequency
         )
-
-        # Set Redis expiry
-        self.redis_service.set_subscription_expiry(subscription.subscription_id, due_date)
 
         return subscription
 
@@ -68,8 +65,8 @@ class SubscriptionService:
                                    new_status: str, proof: Optional[Proof] = None) -> Subscription:
         """Update subscription status and create snapshot"""
         with transaction.atomic():
-            # Remove existing Redis key
-            self.redis_service.delete_subscription_expiry(subscription.subscription_id)
+            # Identify milestone if proof is provided
+            milestone = getattr(proof, "milestone", None) if proof else None
 
             starts_on = subscription.starts_on
             ends_on = subscription.ends_on
@@ -84,6 +81,8 @@ class SubscriptionService:
             else:
                 snapshot_status = Snapshot_status_enum.COMPLETED.value
                 new_streak = subscription.streak + 1
+                if milestone:
+                    self.milestone_service.complete_milestone(milestone.milestone_id)
 
             # Create snapshot
             Snapshot.objects.create(
@@ -104,8 +103,6 @@ class SubscriptionService:
                 subscription.status = Subscription_enum.IN_PROGRESS.value
                 subscription.starts_on = new_starts_on
                 subscription.due_date = new_due_date
-                # Set new Redis expiry
-                self.redis_service.set_subscription_expiry(subscription.subscription_id, new_due_date)
 
             subscription.save()
             return subscription
