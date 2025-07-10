@@ -110,6 +110,7 @@ class Subscription(models.Model):
     )
     streak = models.IntegerField(default=0)
     max_streak = models.IntegerField(default=0)
+    # TODO: status can be removed since it is controlled at milestone level
     status = models.CharField(
         max_length=30,
         choices=STATUS,

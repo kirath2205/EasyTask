@@ -66,7 +66,6 @@ class MilestoneService:
     def get_active_milestone(self, subscription):
         """Return the milestone currently active for a subscription."""
         now = timezone.now()
-        print("now:", now)
         try:
             return Milestone.objects.get(
                 subscription=subscription,
@@ -75,3 +74,15 @@ class MilestoneService:
             )
         except Milestone.DoesNotExist:
             return None
+
+    def get_active_or_future_milestone(self, subscription) -> Milestone:
+        milestone = self.get_active_milestone(subscription)
+
+        if not milestone or (milestone and milestone.is_completed):
+            now = timezone.now()
+            milestone = Milestone.objects\
+                .filter(subscription=subscription, started_on__gt=now)\
+                .order_by('started_on')\
+                .first()
+
+        return milestone

@@ -1,8 +1,9 @@
-from typing import Dict, Any, Optional
+from typing import Any, Dict
+
 from django.contrib.auth import get_user_model
 
-from ..services import TaskService, SubscriptionService, ProofService, MilestoneService
-from ..models import Subscription
+from ..exceptions.PermissionException import PermissionException
+from ..services import MilestoneService, ProofService, SubscriptionService, TaskService
 
 User = get_user_model()
 
@@ -35,6 +36,40 @@ class TaskManager:
                 'success': False,
                 'error': str(e),
                 'message': 'Failed to create task'
+            }
+
+    def create_public_task(self, user: User, task_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+            Business workflow for creating a brand task
+        """
+        try:
+            task = self.task_service.create_public_task(user, task_data)
+            return {
+                'success': True,
+                'task_id': str(task.task_id),
+                'message': 'Brand task created successfully'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+                'message': 'Failed to create brand task'
+            }
+
+    def create_subscription(self, user: User, task_id) -> Dict[str, Any]:
+        try:
+            task = self.task_service.get_task_by_id(task_id=task_id)
+            subscription = self.task_service.create_subscription(user, task)
+            return {
+                'success': True,
+                'subscription_id': str(subscription.subscription_id),
+                'message': 'Subscribed successfully'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+                'message': 'Subscription failed'
             }
 
     def submit_task_proof(self, subscription_id: str, image_uri: str) -> Dict[str, Any]:
@@ -120,3 +155,18 @@ class TaskManager:
                 'error': str(e),
                 'message': 'Failed to process validation'
             }
+
+    def get_milestone(self, user: User, subscription_id: str):
+        subscription = self.subscription_service.get_subscription_by_id(subscription_id)
+
+        if subscription.status == "COMPLETED":
+            return {
+                "status": subscription.status
+            }
+
+        if not user == subscription.user:
+            raise PermissionException("User does not have access to this subscription")
+
+        milestone = self.milestone_service.get_active_or_future_milestone(subscription)
+
+        return milestone

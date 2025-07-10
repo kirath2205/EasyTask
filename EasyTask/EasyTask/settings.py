@@ -68,6 +68,7 @@ REST_AUTH = {
     'USE_JWT': True,
     'JWT_AUTH_COOKIE': 'Bearer',
     'JWT_AUTH_REFRESH_COOKIE': 'REFRESH',
+    'JWT_AUTH_HTTPONLY': False,
 }
 
 GOOGLE_CALLBACK_URL = os.getenv('GOOGLE_CALLBACK_URL')

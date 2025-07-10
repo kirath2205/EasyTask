@@ -5,7 +5,7 @@ from .models import Task, Subscription, Proof, Milestone
 from .services import ValidationService
 
 
-class PrivateTaskSerializer(serializers.ModelSerializer):
+class TaskSerializer(serializers.ModelSerializer):
     """
     Simplified serializer focused only on data validation and serialization
     Business logic moved to services
@@ -13,7 +13,7 @@ class PrivateTaskSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields = ['title', 'description', 'frequency', 'starts_on', 'ends_on']
+        fields = '__all__'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -42,8 +42,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Subscription
-        fields = ['subscription_id', 'task', 'starts_on', 'due_date', 'ends_on',
-                  'frequency', 'streak', 'max_streak', 'status']
+        fields = '__all__'
 
     def get_task(self, obj):
         return {
@@ -52,6 +51,9 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             'description': obj.task.description
         }
 
+class PublicSubscriptionSerializer(serializers.Serializer):
+    """Serializer for creating a subscription to a public task."""
+    task_id = serializers.UUIDField()
 
 class ProofSerializer(serializers.ModelSerializer):
     """
@@ -73,3 +75,4 @@ class ProofSerializer(serializers.ModelSerializer):
 class MilestoneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Milestone
+        fields = '__all__'
