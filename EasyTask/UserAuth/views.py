@@ -153,6 +153,33 @@ def jwt_required(view_func):
     return _wrapped_view
 
 
+def jwt_optional(view_func):
+    """Attach user to request if a valid JWT token is provided."""
+
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        User = get_user_model()
+        auth_header = request.headers.get("Authorization")
+        request.user = None
+
+        if auth_header:
+            try:
+                prefix, token = auth_header.split(" ")
+                if prefix.lower() != "bearer":
+                    raise jwt.InvalidTokenError("Invalid token prefix")
+
+                payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+                user_id = payload.get("user_id")
+
+                if user_id:
+                    request.user = User.objects.filter(id=user_id).first()
+            except Exception:
+                request.user = None
+        return view_func(request, *args, **kwargs)
+
+    return _wrapped_view
+
+
 class GoogleLogin(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
     callback_url = settings.GOOGLE_CALLBACK_URL

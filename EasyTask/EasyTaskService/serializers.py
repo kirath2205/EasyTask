@@ -51,9 +51,11 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             'description': obj.task.description
         }
 
+
 class PublicSubscriptionSerializer(serializers.Serializer):
     """Serializer for creating a subscription to a public task."""
     task_id = serializers.UUIDField()
+
 
 class ProofSerializer(serializers.ModelSerializer):
     """
@@ -76,3 +78,23 @@ class MilestoneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Milestone
         fields = '__all__'
+
+
+class PublicTaskSerializer(serializers.ModelSerializer):
+    """Serializer for listing public tasks with optional subscription info."""
+
+    subscription = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Task
+        fields = "__all__"
+
+    def get_subscription(self, obj):
+        user = self.context.get("user")
+        if not user:
+            return None
+        subscription = Subscription.objects.filter(user=user, task=obj).first()
+        if subscription:
+            return SubscriptionSerializer(subscription).data
+        return None
+

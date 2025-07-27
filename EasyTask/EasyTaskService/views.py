@@ -2,16 +2,20 @@ from rest_framework.response import Response
 import traceback
 
 from EasyTask.celery import app
-from UserAuth.views import jwt_required
+from UserAuth.views import jwt_required, jwt_optional
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_500_INTERNAL_SERVER_ERROR
 
 from .business import TaskManager
+from .enums import Task_type_enum
 from .exceptions import PermissionException
-from .serializers import PublicSubscriptionSerializer, TaskSerializer, ProofSerializer, SubscriptionSerializer, MilestoneSerializer
+from .serializers import PublicSubscriptionSerializer, PublicTaskSerializer, TaskSerializer, ProofSerializer, \
+    SubscriptionSerializer, MilestoneSerializer
 from .services import SubscriptionService
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 
 
 @api_view(['POST'])
@@ -94,13 +98,19 @@ def get_subscriptions(request):
     page_size = int(request.query_params.get('page_size', 10))
 
     try:
-        subscription_service = SubscriptionService()
-        result = subscription_service.get_subscriptions_paginated(
+        task_manager = TaskManager()
+        result = task_manager.get_subscriptions_paginated(
             user=user, status=subscription_status, page=page, page_size=page_size
         )
 
-        # Serialize the results
-        serialized_results = SubscriptionSerializer(result['results'], many=True).data
+        serialized_results = []
+        for item in result['results']:
+            sub_data = SubscriptionSerializer(item['subscription']).data
+            milestone = item['milestone']
+            sub_data['milestone'] = (
+                MilestoneSerializer(milestone).data if milestone else None
+            )
+            serialized_results.append(sub_data)
 
         return Response({
             'results': serialized_results,
@@ -174,4 +184,36 @@ def get_milestone(request):
     except Exception as e:
         print(f"Error getting milestone for subscription: {subscription_id} {e}")
         print(traceback.format_exc())
-        return Response({"error": f"Error getting milestone for subscription: {subscription_id} {e}"}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": f"Error getting milestone for subscription: {subscription_id} {e}"},
+                        status=HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@jwt_optional
+@permission_classes([AllowAny])
+def get_public_tasks(request):
+    user = request.user if request.user else None
+
+    page = int(request.query_params.get('page', 1))
+    page_size = int(request.query_params.get('page_size', 10))
+    task_type = Task_type_enum.PUBLIC
+
+    try:
+        task_manager = TaskManager()
+        tasks = task_manager.get_tasks_paginated(user=user, page=page, page_size=page_size, task_type=task_type)
+
+        serializer = PublicTaskSerializer(tasks["results"], many=True, context={"user": request.user})
+
+        return Response(
+            {
+                "results": serializer.data,
+                "count": tasks["count"],
+                "next": tasks["next"],
+                "previous": tasks["previous"],
+            }
+        )
+
+    except Exception as e:
+        print(f"Error getting tasks: {e}")
+        print(traceback.format_exc())
+        return Response({"error": "Something went wrong. Please try again later."}, status=500)

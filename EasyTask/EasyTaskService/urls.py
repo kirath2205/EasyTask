@@ -11,7 +11,8 @@ urlpatterns = [
     path("submitProof", views.submit_proof, name="SubmitProof"),
     path("createPublicTask", views.create_public_task, name="CreatePublicTask"),
     path("subscribeTask", views.subscribe_task, name="SubscribeTask"),
-    path("getMilestone", views.get_milestone, name="GetMilestone")
+    path("getMilestone", views.get_milestone, name="GetMilestone"),
+    path("getPublicTasks", views.get_public_tasks, name="GetPublicTasks")
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

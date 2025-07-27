@@ -170,3 +170,22 @@ class TaskManager:
         milestone = self.milestone_service.get_active_or_future_milestone(subscription)
 
         return milestone
+
+    def get_subscriptions_paginated(self, user, status, page, page_size):
+        result = self.subscription_service.get_subscriptions_paginated(user, status, page, page_size)
+
+        enriched = []
+        for subscription in result["results"]:
+            milestone = self.milestone_service.get_active_or_future_milestone(
+                subscription
+            )
+            enriched.append({
+                "subscription": subscription,
+                "milestone": milestone,
+            })
+
+        result["results"] = enriched
+        return result
+
+    def get_tasks_paginated(self, user, page, page_size, task_type):
+        return self.task_service.get_tasks_paginated(user, page, page_size, task_type)

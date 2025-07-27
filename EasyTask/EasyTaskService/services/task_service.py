@@ -22,15 +22,6 @@ class TaskService:
         """
         with transaction.atomic():
             task = self.__create_task(Task_type_enum.PRIVATE.value, task_data)
-
-            # Create subscription using subscription service
-            # subscription = self.subscription_service.create_subscription(
-            #     task=task,
-            #     user=user,
-            #     starts_on=task_data['starts_on'],
-            #     ends_on=task_data['ends_on'],
-            #     frequency=task_data['frequency']
-            # )
             subscription = self.create_subscription(user, task)
 
             return subscription
@@ -76,3 +67,24 @@ class TaskService:
         )
 
         return subscription
+
+    def get_tasks_paginated(self, user, page, page_size, task_type):
+        """Return paginated public tasks."""
+        tasks = Task.objects.filter(task_type=Task_type_enum.PUBLIC.value).order_by("created_at")
+
+        total_count = tasks.count()
+        start_index = (page - 1) * page_size
+        end_index = start_index + page_size
+        tasks_page = tasks[start_index:end_index]
+
+        has_next = end_index < total_count
+        has_previous = page > 1
+
+        return {
+            "results": list(tasks_page),
+            "count": total_count,
+            "next": page + 1 if has_next else None,
+            "previous": page - 1 if has_previous else None,
+            "page": page,
+            "page_size": page_size,
+        }
