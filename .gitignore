@@ -3,3 +3,7 @@
 venv
 
 */migrations/*.py
+
+*.hcl
+*.tfstate
+*.terraform

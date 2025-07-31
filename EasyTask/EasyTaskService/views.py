@@ -135,7 +135,6 @@ def submit_proof(request):
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # Use business layer for proof submission
     task_manager = TaskManager()
     result = task_manager.submit_task_proof(
         subscription_id=str(serializer.validated_data['subscription_id']),
