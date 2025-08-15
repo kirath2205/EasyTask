@@ -5,7 +5,8 @@ from django.urls import include, path, re_path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
-
+from .views import health_check
+from .settings import DEBUG
 schema_view = get_schema_view(
     openapi.Info(
         title="EasyTask APIs",
@@ -16,6 +17,7 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    path('health/', health_check),
     path('admin/', admin.site.urls),
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
@@ -26,3 +28,9 @@ urlpatterns = [
 
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+if DEBUG:
+    from django.conf import settings
+    from django.conf.urls.static import static
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
