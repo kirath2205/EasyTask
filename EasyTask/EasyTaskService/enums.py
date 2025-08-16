@@ -16,3 +16,8 @@ class Snapshot_status_enum(Enum):
 class Subscription_enum(Enum):
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
+
+
+class Task_type_enum(Enum):
+    PUBLIC = "PUBLIC"
+    PRIVATE = "PRIVATE"

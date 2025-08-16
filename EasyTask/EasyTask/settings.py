@@ -16,6 +16,12 @@ import os
 from dotenv import load_dotenv
 import redis
 from celery import Celery
+import sys
+
+# Default: load .env from project root
+env_file = os.getenv("ENV_FILE", ".env")  # You can pass ENV_FILE via docker or pycharm
+load_dotenv(dotenv_path=env_file)
+print("DB_HOST from env:", os.getenv("DB_HOST"))
 
 
 
@@ -34,7 +40,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-_i7&a70r#f*cs&=^8v^#ocvmjstm-p@66t4oza%bctn_jx2a^#'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('debug')
 CORS_ALLOW_ALL_ORIGINS = True
 ALLOWED_HOSTS = ['*']
 
@@ -48,7 +54,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'UserAuth',
-    'TaskService',
     'EasyTaskService',
     'phonenumber_field',
     'drf_yasg',
@@ -69,6 +74,7 @@ REST_AUTH = {
     'USE_JWT': True,
     'JWT_AUTH_COOKIE': 'Bearer',
     'JWT_AUTH_REFRESH_COOKIE': 'REFRESH',
+    'JWT_AUTH_HTTPONLY': False,
 }
 
 GOOGLE_CALLBACK_URL = os.getenv('GOOGLE_CALLBACK_URL')
@@ -247,3 +253,19 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = 587
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'stream': sys.stdout,
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG' if DEBUG else 'INFO',
+    },
+}
+
